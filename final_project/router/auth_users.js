@@ -92,19 +92,28 @@ regd_users.put("/auth/review/:isbn", authenticateToken, (req, res) => {
     .json({ message: "Review added/updated successfully!" });
 });
 
-// Example route to register users (you might want to implement this)
-regd_users.post("/register", (req, res) => {
-  const { username, password } = req.body;
-  if (!isValid(username)) {
-    return res.status(400).json({ message: "Invalid username!" });
+// Delete a book review (protected route)
+regd_users.delete("/auth/review/:isbn", authenticateToken, (req, res) => {
+  const { isbn } = req.params;
+  const username = req.user.username; // Get the username from the verified token
+
+  const book = books[isbn]; // Find the book by ISBN
+  if (!book) {
+    return res.status(404).json({ message: "Book not found!" });
   }
 
-  if (authenticatedUser(username, password)) {
-    return res.status(400).json({ message: "User already exists!" });
+  if (!book.reviews || !book.reviews[username]) {
+    return res.status(404).json({ message: "Review not found!" });
   }
 
-  users.push({ username, password });
-  return res.status(201).json({ message: "User registered successfully!" });
+  // Delete the user's review
+  delete book.reviews[username];
+
+  return res
+    .status(200)
+    .json({
+      message: "Review for the ISBN 1 posted by the user deleted successfully!",
+    });
 });
 
 module.exports.authenticated = regd_users;
